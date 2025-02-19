@@ -8,11 +8,11 @@ def run_setup():
 
     print("\n2. Setting up database...")
     try:
-        # Run database creation script
+        # Jalankan skrip pembuatan tabel
         subprocess.run([sys.executable, "database/create_table.py"])
         print("Database tables created successfully")
         
-        # Run database seeder
+        # Jalankan skrip seeder
         subprocess.run([sys.executable, "database/seeder_table.py"])
         print("Database seeded successfully")
     except Exception as e:
@@ -21,7 +21,8 @@ def run_setup():
     
     print("\n3. Starting detection system...")
     try:
-        subprocess.run([sys.executable, "APD_detection.py"])
+        # Jalankan skrip deteksi orang
+        subprocess.run([sys.executable, "people_detection.py"])
     except Exception as e:
         print(f"Detection system error: {str(e)}")
         return False
@@ -29,7 +30,7 @@ def run_setup():
     return True
 
 if __name__ == "__main__":
-    # Check if .env exists
+    # Cek apakah file .env ada
     if not os.path.exists(".env"):
         print("ERROR: .env file not found!")
         print("Please create .env file with following format:")
