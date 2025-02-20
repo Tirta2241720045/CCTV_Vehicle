@@ -53,7 +53,7 @@ def save_violation_to_db(cursor, id_cctv, overtime_duration, video_path):
     )
 
 
-def record_detection_video(cap, timestamp):
+def record_detection_video(cap, timestamp, initial_detection_duration=0):
     """
     Merekam hasil proses video (deteksi orang) dan menyimpannya ke file.
     """
@@ -88,19 +88,30 @@ def record_detection_video(cap, timestamp):
             # Deteksi orang menggunakan YOLO
             results = model(frame, conf=DETECTION_THRESHOLD)
 
-            # Gambar bounding box dan informasi deteksi pada frame
+            # Konversi hasil deteksi ke format yang sesuai untuk DeepSORT
+            detections = []
             for box in results[0].boxes:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 confidence = float(box.conf[0])
-                label = model.names[int(box.cls[0])]
+                detections.append(([x1, y1, x2 - x1, y2 - y1], confidence, "person"))
 
-                # Misalkan kita memiliki track_id dan detection_duration
-                track_id = (
-                    1  # Ganti dengan logika untuk mendapatkan track_id yang sesuai
-                )
-                detection_duration = (
+            # Update tracker dengan deteksi terbaru
+            tracks = tracker.update_tracks(detections, frame=frame)
+
+            # Proses setiap objek yang dilacak
+            for track in tracks:
+                if not track.is_confirmed():
+                    continue
+
+                track_id = track.track_id
+                ltrb = track.to_ltrb()
+                x1, y1, x2, y2 = map(int, ltrb)
+                bbox = (x1, y1, x2 - x1, x2 - y1)
+
+                # Hitung durasi deteksi
+                detection_duration = initial_detection_duration + (
                     frames_captured / RECORD_FPS
-                )  # Contoh durasi deteksi
+                )
 
                 # Tentukan warna berdasarkan durasi deteksi
                 color = (
@@ -204,7 +215,9 @@ def process_video(input_path, id_cctv=1):
                         # Mulai merekam jika belum merekam
                         if not recording:
                             video_path = record_detection_video(
-                                cap, datetime.now().strftime("%Y%m%d_%H%M%S")
+                                cap,
+                                datetime.now().strftime("%Y%m%d_%H%M%S"),
+                                detection_duration,
                             )
                             recording = True
                         # Simpan ke database
