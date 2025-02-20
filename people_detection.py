@@ -194,10 +194,10 @@ def process_video(input_path, id_cctv=1):
                 if detection_start_time is None:
                     detection_start_time = datetime.now()
                 else:
-                    # Hitung durasi deteksi
+                    # Hitung durasi deteksi (diperlambat 30 kali)
                     detection_duration = (
                         datetime.now() - detection_start_time
-                    ).total_seconds()
+                    ).total_seconds() / 25
                     if detection_duration > OVERTIME_THRESHOLD:
                         overtime_duration = int(detection_duration)
                         violation_bbox = bbox
@@ -222,7 +222,7 @@ def process_video(input_path, id_cctv=1):
                     (0, 255, 0)
                     if detection_duration <= OVERTIME_THRESHOLD
                     else (0, 0, 255)
-                )  # Fixed closing parenthesis here
+                )
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                 cv2.putText(
                     frame,
