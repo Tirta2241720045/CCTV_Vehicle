@@ -1,97 +1,36 @@
-import psycopg2  # type: ignore
-import os
-from dotenv import load_dotenv
+import psycopg2
+from database import get_db
 
-# Load environment variables
-load_dotenv()
 
-# Create connection
-conn = psycopg2.connect(
-    dbname=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT"),
-)
-cursor = conn.cursor()
+def create_database_and_table():
+    """Create database and table if they don't exist."""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
 
-try:
-    # Drop existing tables and types in correct order
-    cursor.execute(
+        # Create table if it doesn't exist
+        create_table_query = """
+        CREATE TABLE IF NOT EXISTS my_data (
+            id SERIAL PRIMARY KEY,
+            date DATE,
+            time TIME,
+            track_id INT,
+            class_name VARCHAR(255),
+            speed FLOAT,
+            numberplate TEXT
+        )
         """
-    DO $$ 
-    BEGIN
-        -- Drop tables if they exist
-        DROP TABLE IF EXISTS detection CASCADE;
-        DROP TABLE IF EXISTS ppa CASCADE;
-        DROP TABLE IF EXISTS cctv CASCADE;
-        
-        -- Drop enum type if exists
-        DROP TYPE IF EXISTS ppa_label CASCADE;
-    END
-    $$;
-    """
-    )
+        cursor.execute(create_table_query)
+        conn.commit()  # Commit the changes
+        print("Table 'my_data' checked/created.")
+    except Exception as err:
+        print(f"Error: {err}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
-    # Create cctv table
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS cctv (
-        id SERIAL PRIMARY KEY,
-        merek VARCHAR(100),
-        gedung VARCHAR(100),
-        lantai INT,
-        latitude DOUBLE PRECISION,
-        longitude DOUBLE PRECISION,
-        gambar VARCHAR(255)
-    );
-    """
-    )
 
-    # Create ppa table with ENUM type
-    cursor.execute(
-        """
-    DO $$ 
-    BEGIN
-        CREATE TYPE ppa_label AS ENUM ('Tidak Memakai Helm', 'Tidak Memakai Masker', 'Tidak Memakai Rompi');
-    END
-    $$;
-    """
-    )
-
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS ppa (
-        id SERIAL PRIMARY KEY,
-        label ppa_label
-    );
-    """
-    )
-
-    # Create detection table
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS detection (
-        id SERIAL PRIMARY KEY,
-        id_cctv INT REFERENCES cctv(id) ON DELETE CASCADE,
-        id_ppa INT REFERENCES ppa(id) ON DELETE CASCADE,
-        deteksi_jatuh BOOLEAN,
-        deteksi_overtime INT,
-        link_playback VARCHAR(255),
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        confidan DOUBLE PRECISION
-    );
-    """
-    )
-
-    conn.commit()
-    print("Tables dropped and recreated successfully.")
-
-except psycopg2.Error as e:
-    print(f"Database error: {e}")
-    conn.rollback()
-
-finally:
-    # Close database connection
-    cursor.close()
-    conn.close()
+if __name__ == "__main__":
+    create_database_and_table()

@@ -63,6 +63,7 @@ def run_setup():
         """
 
         # People Detection
+        """
         people_thread = threading.Thread(
             target=run_detection_script,
             args=("people_detection.py",),
@@ -70,6 +71,16 @@ def run_setup():
             daemon=True,
         )
         people_thread.start()
+        """
+
+        # Vehicle Detection
+        vehicle_thread = threading.Thread(
+            target=run_detection_script,
+            args=("vehicle_detection.py",),
+            name="Vehicle_Detection",
+            daemon=True,
+        )
+        vehicle_thread.start()
 
         # Keep main thread running
         try:

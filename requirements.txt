@@ -8,3 +8,5 @@ cloudinary
 torch
 torchvision
 deep-sort-realtime
+paddleocr  
+mysql-connector-python  
