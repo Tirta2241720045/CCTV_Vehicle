@@ -109,9 +109,7 @@ class SpeedEstimator(BaseSolution):
 
 
 # Open the video file
-cap = cv2.VideoCapture(
-    r"E:\Magang\ Project\myLibrary\myLibrary\Experience\vehicle_detection\video-test\test_vehicle.mp4"
-)
+cap = cv2.VideoCapture(r"E:E:\Magang\Project\CCTV_Vehicle\video-test\test_vehicle.mp4")
 
 # Define region points for counting
 region_points = [(0, 145), (1018, 145)]
@@ -119,7 +117,7 @@ region_points = [(0, 145), (1018, 145)]
 # Initialize the object counter
 speed_obj = SpeedEstimator(
     region=region_points,
-    model=r"E:\Magang\Project\myLibrary\myLibrary\Experience\vehicle_detection\Model\best.pt",  # Use the provided model path
+    model=r"E:\Magang\Project\CCTV_Vehicle\Model\best.pt",  # Use the provided model path
     line_width=2,
 )
 
