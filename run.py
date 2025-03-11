@@ -39,39 +39,6 @@ def run_setup():
 
     print("\n3. Starting detection systems...")
     try:
-        # Create threads for each detection system
-        # APD Detection (commented out)
-        """
-        apd_thread = threading.Thread(
-            target=run_detection_script,
-            args=("APD_detection.py",),
-            name="APD_Detection",
-            daemon=True,
-        )
-        apd_thread.start()
-        """
-
-        # Fall Detection (commented out)
-        """
-        fall_thread = threading.Thread(
-            target=run_detection_script,
-            args=("FALL_detection.py",),
-            name="Fall_Detection",
-            daemon=True,
-        )
-        fall_thread.start()
-        """
-
-        # People Detection
-        """
-        people_thread = threading.Thread(
-            target=run_detection_script,
-            args=("people_detection.py",),
-            name="People_Detection",
-            daemon=True,
-        )
-        people_thread.start()
-        """
 
         # Vehicle Detection
         vehicle_thread = threading.Thread(
@@ -103,11 +70,11 @@ if __name__ == "__main__":
         print("Please create .env file with following format:")
         print(
             """
-DB_NAME=your_database_name
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_HOST=your_database_host
-DB_PORT=your_database_port
+                DB_NAME=your_database_name
+                DB_USER=your_database_user
+                DB_PASSWORD=your_database_password
+                DB_HOST=your_database_host
+                DB_PORT=your_database_port
             """
         )
         sys.exit(1)
