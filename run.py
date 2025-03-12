@@ -47,7 +47,7 @@ def run_setup():
             name="Vehicle_Detection",
             daemon=True,
         )
-        # vehicle_thread.start()
+        vehicle_thread.start()
 
         # Keep main thread running
         try:

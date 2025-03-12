@@ -12,6 +12,7 @@ flask>=2.0.0
 
 # OCR 
 paddleocr>=2.6.0  
+paddlepaddle>=2.5.0
 
 # Deep learning 
 torch>=2.0.0
