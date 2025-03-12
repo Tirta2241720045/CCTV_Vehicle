@@ -1,11 +1,12 @@
+import time
 import cv2
 import numpy as np
 from ultralytics.solutions.solutions import BaseSolution
 from ultralytics.utils.plotting import Annotator, colors
-from datetime import datetime
 from paddleocr import PaddleOCR
 import torch
 import os
+
 
 # Create directory for license plate images
 PLATE_OUTPUT_DIR = "Playback/plates"
@@ -29,8 +30,8 @@ class LicensePlateDetector(BaseSolution):
         cv2.namedWindow("License Plate", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("License Plate", 400, 200)
 
+
     def perform_ocr(self, image_array):
-        """Performs OCR on the given image and returns the extracted text."""
         if image_array is None:
             raise ValueError("Image is None")
         if isinstance(image_array, np.ndarray):
@@ -38,6 +39,7 @@ class LicensePlateDetector(BaseSolution):
         else:
             raise TypeError("Input image is not a valid numpy array")
         return " ".join([result[1][0] for result in results[0]] if results[0] else "")
+
 
     def detect_plates(self, im0):
         """Detect license plates in the frame."""
@@ -47,10 +49,12 @@ class LicensePlateDetector(BaseSolution):
         self.extract_tracks(im0)  # Extract tracks
 
         # Get current date and time
+
         current_time = datetime.now()
 
         for box, track_id, cls in zip(self.boxes, self.track_ids, self.clss):
-            self.store_tracking_history(track_id, box)  # Store track history
+            self.store_tracking_history(track_id, box)
+
 
             # Get class name
             class_name = self.names[int(cls)]
@@ -68,10 +72,12 @@ class LicensePlateDetector(BaseSolution):
 
             # Process license plates with OCR text
             if track_id not in self.logged_ids and ocr_text.strip():
+
                 print(
                     f"Plate detected: {current_time.strftime('%Y-%m-%d')}, {current_time.strftime('%H:%M:%S')}, {track_id}, {class_name}, {ocr_text}"
                 )
                 self.logged_ids.add(track_id)
+
                 
                 # Save the license plate image with overlay
                 plate_filename = f"{PLATE_OUTPUT_DIR}/plate_{track_id}_{current_time.strftime('%Y%m%d_%H%M%S')}.jpg"
@@ -103,9 +109,9 @@ class LicensePlateDetector(BaseSolution):
                     cv2.imshow("License Plate", plate_vis)
                     cv2.imwrite(plate_filename, plate_vis)
 
-        self.display_output(im0)  # Display output with base class function
-        return im0
 
+        self.display_output(im0)
+        return im0
 
 # Open the video file
 cap = cv2.VideoCapture("video-test/tc.mp4")
@@ -157,3 +163,4 @@ while True:
 cap.release()
 out.release()
 cv2.destroyAllWindows()
+
