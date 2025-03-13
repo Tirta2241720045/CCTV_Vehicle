@@ -9,13 +9,30 @@ def seed_data():
     try:
         cursor = conn.cursor()
         
+        # Updated vehicle data with the detected license plates
         vehicle_data = [
-            ('CAR', 'Toyota', 'ABC123', 'Silver'),
-            ('MOTORCYCLE', 'Honda', 'XYZ789', 'Black'),
-            ('TRUCK', 'Volvo', 'DEF456', 'Blue'),
-            ('BUS', 'Mercedes', 'GHI789', 'White'),
-            ('CAR', 'Nissan', 'JKL012', 'Red'),
-            ('MOTORCYCLE', 'Yamaha', 'MNO345', 'Green')
+            ('CAR', 'Toyota', '2835BSY', 'Silver'),
+            ('MOTORCYCLE', 'Honda', '0752GJR', 'Black'),
+            ('TRUCK', 'Volvo', '8589BXT', 'Blue'),
+            ('BUS', 'Mercedes', '6380CCS', 'White'),
+            ('CAR', 'Nissan', '9079GCH', 'Red'),
+            ('CAR', 'Toyota', 'MA4844CC', 'White'),
+            ('MOTORCYCLE', 'Yamaha', '5553DNM', 'Green'),
+            ('CAR', 'Hyundai', '3693FSG', 'Silver'),
+            ('CAR', 'Ford', '3574BNW', 'Black'),
+            ('TRUCK', 'Scania', '0262HFP', 'Blue'),
+            ('CAR', 'Kia', '8934FMR', 'Red'),
+            ('CAR', 'Mazda', '5280DLY', 'Gray'),
+            ('BUS', 'Isuzu', '9916GHS', 'Yellow'),
+            ('CAR', 'Suzuki', '7963JVJ', 'White'),
+            ('CAR', 'Mitsubishi', '3092FRX', 'Green'),
+            ('CAR', 'Daihatsu', 'MA3043DF', 'Silver'),
+            ('MOTORCYCLE', 'Kawasaki', '1024DR', 'Red'),
+            ('CAR', 'Tesla', '8174HGL', 'Black'),
+            ('TRUCK', 'Hino', '4234DZK', 'White'),
+            ('CAR', 'Lexus', '0526HGN', 'Blue'),
+            ('CAR', 'Honda', '4557JMF', 'Silver'),
+            ('CAR', 'Toyota', '5739JMC', 'Gray')
         ]
         
         vehicle_query = """
@@ -30,6 +47,7 @@ def seed_data():
             vehicle_ids.append(vehicle_id)
         print(f"Added {len(vehicle_ids)} vehicles")
         
+        # Continue with existing camera data
         camera_data = [
             ('Front Gate', 'IN'),
             ('Back Gate', 'OUT'),
@@ -48,9 +66,15 @@ def seed_data():
             camera_ids.append(camera_id)
         print(f"Added {len(camera_ids)} cameras")
         
+        # Update employees to use more vehicles (including some previously assigned to guests)
         employee_data = [
             ('John Doe', 'IT Department', 'EMP001', vehicle_ids[0]),
-            ('Jane Smith', 'HR Department', 'EMP002', vehicle_ids[1])
+            ('Jane Smith', 'HR Department', 'EMP002', vehicle_ids[1]),
+            ('Michael Johnson', 'Finance', 'EMP003', vehicle_ids[2]),
+            ('Sarah Williams', 'Marketing', 'EMP004', vehicle_ids[3]),
+            ('Robert Taylor', 'Operations', 'EMP005', vehicle_ids[4]),
+            ('Emily Jones', 'Engineering', 'EMP006', vehicle_ids[5]),
+            ('William Brown', 'Legal', 'EMP007', vehicle_ids[6])
         ]
         
         employee_query = """
@@ -65,10 +89,8 @@ def seed_data():
             employee_ids.append(employee_id)
         print(f"Added {len(employee_ids)} employees")
         
-        guest_data = [
-            ('Bob Johnson', vehicle_ids[2]),
-            ('Alice Brown', vehicle_ids[3])
-        ]
+        # Empty guest data - no guests will be created
+        guest_data = []
         
         guest_query = """
         INSERT INTO "Guest" (name, id_vehicle)
@@ -76,15 +98,18 @@ def seed_data():
         """
         
         guest_ids = []
-        for data in guest_data:
-            cursor.execute(guest_query, data)
-            guest_id = cursor.fetchone()[0]
-            guest_ids.append(guest_id)
+        # No guest data to insert
         print(f"Added {len(guest_ids)} guests")
      
+        # Update interns to use more vehicles (including remaining previously assigned to guests)
         intership_data = [
-            ('David Wilson', 'University A', 'Marketing', vehicle_ids[4]),
-            ('Mary Johnson', 'College B', 'Engineering', vehicle_ids[5])
+            ('David Wilson', 'University A', 'Marketing', vehicle_ids[7]),
+            ('Mary Johnson', 'College B', 'Engineering', vehicle_ids[8]),
+            ('Thomas Brown', 'University C', 'IT Department', vehicle_ids[9]),
+            ('Jennifer Davis', 'College D', 'Finance', vehicle_ids[10]),
+            ('James Wilson', 'College E', 'Operations', vehicle_ids[11]),
+            ('Alice Green', 'University F', 'Research', vehicle_ids[12]),
+            ('Mark Anderson', 'College G', 'Development', vehicle_ids[13])
         ]
         
         intership_query = """
@@ -99,7 +124,8 @@ def seed_data():
             intership_ids.append(intership_id)
         print(f"Added {len(intership_ids)} interns")
         
-      
+        # The remaining vehicles will not be associated with any person yet
+        
         current_time = datetime.now()
         
         # Create detections for employees
@@ -111,14 +137,7 @@ def seed_data():
             cursor.execute(detection_query, 
                           (employee_id, None, None, f'images/employee{i+1}.jpg', camera_ids[0], current_time))
         
-        # Create detections for guests
-        for i, guest_id in enumerate(guest_ids):
-            detection_query = """
-            INSERT INTO "Detection" (id_employee, id_guest, id_intership, image_path, id_camera, time)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(detection_query, 
-                          (None, guest_id, None, f'images/guest{i+1}.jpg', camera_ids[1], current_time))
+        # No detections for guests as there are no guests
         
         # Create detections for interns
         for i, intership_id in enumerate(intership_ids):
