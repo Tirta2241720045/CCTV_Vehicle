@@ -1,10 +1,10 @@
-import cv2
+import cv2 # type: ignore
 import numpy as np
-from ultralytics.solutions.solutions import BaseSolution
-from ultralytics.utils.plotting import Annotator, colors
+from ultralytics.solutions.solutions import BaseSolution  # type: ignore
+from ultralytics.utils.plotting import Annotator, colors  # type: ignore
 from datetime import datetime
-from paddleocr import PaddleOCR
-import torch
+from paddleocr import PaddleOCR # type: ignore
+import torch # type: ignore
 import os
 from database.database import get_db
 import re 
