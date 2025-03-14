@@ -17,3 +17,8 @@ paddlepaddle>=2.5.0
 # Deep learning 
 torch>=2.0.0
 torchvision>=0.15.0
+
+
+# Install CUDA-enabled versions (CUDA 11.8 is recommended)
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118 (this is for CUDA rtx 3050)
+# pip install paddlepaddle-gpu

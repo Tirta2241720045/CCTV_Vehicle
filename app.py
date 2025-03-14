@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, render_template_string, abort
+from flask import Flask, send_from_directory, render_template_string, abort # type: ignore
 import os
 import mimetypes
 import logging
