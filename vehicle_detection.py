@@ -38,6 +38,40 @@ class LicensePlateDetector(BaseSolution):
         cv2.namedWindow("License Plate", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("License Plate", 400, 200)
 
+    def initialize_region(self):
+        """Initialize region where detection should be performed."""
+        if hasattr(self, 'region') and self.region:
+            # Convert region points to numpy array for easier processing
+            self.region_pts = np.array(self.region, dtype=np.int32)
+            # Create a mask for the region
+            self.has_region = True
+            print(f"Detection region initialized with {len(self.region)} points")
+        else:
+            self.has_region = False
+            print("No detection region specified, will process entire frame")
+
+    def is_inside_region(self, box):
+        """Check if a bounding box is inside or intersects with the defined region."""
+        if not self.has_region:
+            return True  # Process all boxes if no region defined
+        
+        # Get center point of bounding box
+        x1, y1, x2, y2 = box
+        center_x = (x1 + x2) / 2
+        center_y = (y1 + y2) / 2
+        
+        # Check if center point is inside the polygon
+        # For rectangle: Check if point is within bounds
+        if len(self.region_pts) == 4:  # Rectangle
+            min_x = min(pt[0] for pt in self.region_pts)
+            max_x = max(pt[0] for pt in self.region_pts)
+            min_y = min(pt[1] for pt in self.region_pts)
+            max_y = max(pt[1] for pt in self.region_pts)
+            
+            return (min_x <= center_x <= max_x) and (min_y <= center_y <= max_y)
+        else:  # Polygon
+            return cv2.pointPolygonTest(self.region_pts, (center_x, center_y), False) >= 0
+
     def perform_ocr(self, image_array):
         """Performs OCR on the given image and returns the extracted text."""
         if image_array is None:
@@ -223,11 +257,19 @@ class LicensePlateDetector(BaseSolution):
         )  # Initialize annotator
         self.extract_tracks(im0)  # Extract tracks
 
-        # Get current date and time
+        # Draw region on frame if defined
+        if self.has_region and len(self.region_pts) > 2:
+            cv2.polylines(im0, [self.region_pts], True, (128, 0, 128), 1)  # Purple color, thickness 1
+
+    
         current_time = datetime.now()
 
         for box, track_id, cls in zip(self.boxes, self.track_ids, self.clss):
-            self.store_tracking_history(track_id, box)  # Store track history
+            # Skip if the object is not in the defined region
+            if not self.is_inside_region(box):
+                continue
+                
+            self.store_tracking_history(track_id, box)  
 
             # Get class name
             class_name = self.names[int(cls)]
@@ -305,13 +347,17 @@ class LicensePlateDetector(BaseSolution):
 # Open the video file
 cap = cv2.VideoCapture("video-test/tc.mp4")
 
-# Define region points for detection
-region_points = [(0, 145), (1018, 145)]
+region_points = [
+    (450, 100),   # Top-left
+    (1000, 100),   # Top-right
+    (1000, 300),   # Bottom-right
+    (450, 300)    # Bottom-left
+]
 
 # Initialize the license plate detector with CUDA
 detector = LicensePlateDetector(
     region=region_points,
-    model="Model/best.pt",  # Using the license plate model
+    model="Model/best.pt",
     line_width=2,
 )
 
