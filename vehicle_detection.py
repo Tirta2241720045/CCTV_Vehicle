@@ -6,17 +6,20 @@ from datetime import datetime
 from paddleocr import PaddleOCR # type: ignore
 import torch # type: ignore
 import os
+import time  # Add for potential delay
 from database.database import get_db
-import re 
+import re
 
 # Create directory for license plate images
 PLATE_OUTPUT_DIR = "Playback/plates"
 os.makedirs(PLATE_OUTPUT_DIR, exist_ok=True)
 
-# Add this near the top of your file with other constants
-OCR_OUTPUT_FILE = "Playback/ocr_results.txt"
+# Add for full vehicle context images 
+VEHICLE_CONTEXT_DIR = "Playback/vehicles"
+os.makedirs(VEHICLE_CONTEXT_DIR, exist_ok=True)
 
-# Ensure directory exists
+# For OCR results
+OCR_OUTPUT_FILE = "Playback/ocr_results.txt"
 os.makedirs(os.path.dirname(OCR_OUTPUT_FILE), exist_ok=True)
 
 
@@ -260,7 +263,6 @@ class LicensePlateDetector(BaseSolution):
         # Draw region on frame if defined
         if self.has_region and len(self.region_pts) > 2:
             cv2.polylines(im0, [self.region_pts], True, (128, 0, 128), 1)  # Purple color, thickness 1
-
     
         current_time = datetime.now()
 
@@ -280,7 +282,7 @@ class LicensePlateDetector(BaseSolution):
                 box, label=label, color=colors(track_id, True)
             )
 
-            # Extract license plate
+            # Extract license plate for OCR
             x1, y1, x2, y2 = map(int, box)  # Convert box coordinates to integers
             cropped_image = np.array(im0)[y1:y2, x1:x2]
             ocr_text = self.perform_ocr(cropped_image)
@@ -303,13 +305,58 @@ class LicensePlateDetector(BaseSolution):
                     
                     self.logged_ids.add(track_id)
                     
-                    # Save the license plate image with overlay
+                    # Save the entire region context instead of just the license plate
+                    # This captures the vehicle and surrounding area
+                    if self.has_region:
+                        # Get the region bounds
+                        x_min = max(0, min(pt[0] for pt in self.region_pts))
+                        y_min = max(0, min(pt[1] for pt in self.region_pts))
+                        x_max = min(im0.shape[1], max(pt[0] for pt in self.region_pts))
+                        y_max = min(im0.shape[0], max(pt[1] for pt in self.region_pts))
+                        
+                        # Extract the entire detection region
+                        region_image = np.array(im0)[y_min:y_max, x_min:x_max]
+                        
+                        # Create filename for the region image
+                        region_filename = f"{VEHICLE_CONTEXT_DIR}/vehicle_region_{track_id}_{current_time.strftime('%Y%m%d_%H%M%S')}.jpg"
+                        
+                        # Save the region image
+                        cv2.imwrite(region_filename, region_image)
+                        
+                        # Use the region image path for database
+                        image_path = region_filename
+                    else:
+                        # If no region defined, create a larger context around the license plate
+                        # Expand the crop area by 200% in each direction
+                        expand_factor = 2.0
+                        center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+                        width, height = (x2 - x1), (y2 - y1)
+                        
+                        # Calculate expanded coordinates
+                        ex1 = max(0, int(center_x - width * expand_factor / 2))
+                        ey1 = max(0, int(center_y - height * expand_factor / 2))
+                        ex2 = min(im0.shape[1], int(center_x + width * expand_factor / 2))
+                        ey2 = min(im0.shape[0], int(center_y + height * expand_factor / 2))
+                        
+                        # Extract the expanded context
+                        context_image = np.array(im0)[ey1:ey2, ex1:ex2]
+                        
+                        # Create filename for the context image
+                        context_filename = f"{VEHICLE_CONTEXT_DIR}/vehicle_context_{track_id}_{current_time.strftime('%Y%m%d_%H%M%S')}.jpg"
+                        
+                        # Save the context image
+                        cv2.imwrite(context_filename, context_image)
+                        
+                        # Use the context image path for database
+                        image_path = context_filename
+                    
+                    # Still save the original cropped license plate with overlay text
                     plate_filename = f"{PLATE_OUTPUT_DIR}/plate_{track_id}_{current_time.strftime('%Y%m%d_%H%M%S')}.jpg"
                     
-                    # Insert into database and get person type (use the cleaned text)
-                    person_type, owner_name = self.database_insert(cleaned_ocr_text, class_name, plate_filename, current_time)
+                    # Insert into database with the region/context image path
+                    person_type, owner_name = self.database_insert(cleaned_ocr_text, class_name, image_path, current_time)
                     
-                    # Create visualization of the license plate
+                    # Create visualization of the license plate (still use this for display)
                     if cropped_image.size > 0:
                         # Resize for better visibility while maintaining aspect ratio
                         h, w = cropped_image.shape[:2]
